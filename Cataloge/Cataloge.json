@@ -1,0 +1,8 @@
+{
+  "AQICN": {
+    "baseUrl": "https://api.waqi.info/feed",
+    "params": {
+      "token": "e2bcd0ea67986ee83d9d841a0efdc696df385e9d"
+    }
+  }
+}

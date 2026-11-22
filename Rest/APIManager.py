@@ -1,0 +1,70 @@
+from typing import TypeVar
+
+import requests
+from pydantic import BaseModel
+from .APIRequestModel import APIRequestModel
+
+
+class APIManager:
+    T = TypeVar("T", bound=BaseModel)
+
+    def __init__(self, timeout: float = 10.0):
+        self.timeout = timeout
+        self._session = requests.Session()
+
+    def get(
+        self,
+        model: APIRequestModel
+    ) -> T:
+        response = self._session.get(
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            params=model.params or {},
+            json=model.payload.model_dump(exclude_none=True) if model.payload else None,
+            headers=model.headers,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        return model.response_model.model_validate(response.json())
+
+    def post(
+        self,
+        model: APIRequestModel
+    ) -> T:
+        response = self._session.post(
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            params=model.params or {},
+            json=model.payload.model_dump(exclude_none=True) if model.payload else None,
+            headers=model.headers,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        return model.response_model.model_validate(response.json())
+
+    def put(
+        self,
+        model: APIRequestModel
+    ) -> T:
+        response = self._session.put(
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            params=model.params or {},
+            json=model.payload.model_dump(exclude_none=True) if model.payload else None,
+            headers=model.headers,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        return model.response_model.model_validate(response.json())
+
+    def delete(
+        self,
+        model: APIRequestModel
+    ) -> T:
+        response = self._session.delete(
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            params=model.params or {},
+            headers=model.headers,
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        if model.response_model and response.content:
+            return model.response_model.model_validate(response.json())
+        return None
