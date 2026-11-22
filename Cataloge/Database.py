@@ -4,7 +4,7 @@ from pymongo.database import Database
 
 class MongoDatabase:
 
-    def __init__(self, uri: str = "mongodb://localhost:27017/", db_name: str = "smarthome_db"):
+    def __init__(self, uri: str, db_name: str):
         self._client = MongoClient(uri)
         self._db: Database = self._client[db_name]
 

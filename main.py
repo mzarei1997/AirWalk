@@ -1,3 +1,4 @@
+from Cataloge.AQICN.CatalogeRepository import CatalogeRepository 
 from Cataloge.AQICN.ResponseModelAQICN import AqicnResponseModel
 from Rest.RestRequestModel import RestRequestModel
 from Rest.RestManager import RestManager
@@ -6,11 +7,28 @@ from Utilities.Utility import Utility
 from MQTT.MqttManager import MQTTManager
 from Utilities.PollingBridge import PollingBridgeService
 from MQTT.MqttRequestModel import MQTTRequestModel 
+from Cataloge.Database import MongoDatabase
 import time
+from pathlib import Path
 
 
 
 if __name__ == "__main__":
+
+
+
+    repo = CatalogeRepository(
+        mongo_uri="mongodb://localhost:27017",
+        db_name="turin_catalog"
+    )
+    repo.write_turin_boundary("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_boundary.geojson")
+    boundary = repo.read_turin_boundary()
+    repo.write_turin_polygons("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_polygons.geojson")
+    polygons = repo.read_turin_polygons()
+    print(f"Polygons loaded: {len(polygons)}")
+
+
+
 
     ########### DeviceConnector Test
     # def subscribe_callback(topic: str, reading: AqicnResponseModel):
