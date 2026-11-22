@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Dict, Optional, Type
 
-class APIRequestModel(BaseModel):
+class RestRequestModel(BaseModel):
     baseUrl: str
     endpoint: str
     payload: Optional[BaseModel] = None

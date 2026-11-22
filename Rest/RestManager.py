@@ -2,10 +2,10 @@ from typing import TypeVar
 
 import requests
 from pydantic import BaseModel
-from .APIRequestModel import APIRequestModel
+from .RestRequestModel import RestRequestModel
 
 
-class APIManager:
+class RestManager:
     T = TypeVar("T", bound=BaseModel)
 
     def __init__(self, timeout: float = 10.0):
@@ -14,7 +14,7 @@ class APIManager:
 
     def get(
         self,
-        model: APIRequestModel
+        model: RestRequestModel
     ) -> T:
         response = self._session.get(
             f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
@@ -28,7 +28,7 @@ class APIManager:
 
     def post(
         self,
-        model: APIRequestModel
+        model: RestRequestModel
     ) -> T:
         response = self._session.post(
             f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
@@ -42,7 +42,7 @@ class APIManager:
 
     def put(
         self,
-        model: APIRequestModel
+        model: RestRequestModel
     ) -> T:
         response = self._session.put(
             f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
@@ -56,7 +56,7 @@ class APIManager:
 
     def delete(
         self,
-        model: APIRequestModel
+        model: RestRequestModel
     ) -> T:
         response = self._session.delete(
             f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
