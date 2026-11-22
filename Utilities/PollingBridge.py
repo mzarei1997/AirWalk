@@ -1,9 +1,9 @@
 import threading
 from typing import Optional
-from Rest.RestManager import RestManager
-from Rest.RestRequestModel import RestRequestModel
 from MQTT.MqttManager import MQTTManager
 from MQTT.MqttRequestModel import MQTTRequestModel
+from Rest.RestManager import RestManager
+from Rest.RestRequestModel import RestRequestModel
 
 class PollingBridgeService:
     def __init__(
