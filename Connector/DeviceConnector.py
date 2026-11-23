@@ -3,7 +3,7 @@ from Rest.RestManager import RestManager
 from Rest.RestRequestModel import RestRequestModel
 from MQTT.MqttManager import MQTTManager
 from Utilities.PollingBridge import PollingBridgeService
-
+from pydantic import BaseModel
 
 class DeviceConnector:
 
@@ -59,3 +59,9 @@ class DeviceConnector:
             bridge.stop()
         self._mqtt.disconnect()
         self._is_running = False
+
+    def handle_incoming_location(self, data: BaseModel) -> None:
+        self.latest_location = data
+        # self.location_queue.put(data)
+        print(f"[DeviceConnector] Stored new location: {data}")
+        print("----------------------------")

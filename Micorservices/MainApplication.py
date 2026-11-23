@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+from Connector.DeviceConnector import DeviceConnector
 from Micorservices.ApplicationDataModel import ApplicationDataModel, LocationModel
 from Utilities.Utility import Utility
 import paho.mqtt.client as mqtt

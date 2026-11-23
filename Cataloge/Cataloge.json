@@ -12,7 +12,8 @@
     "topic": "southbound/airwalk",
     "client_id": "airwalk-southbound",
     "keep_alive": 60, 
-    "qos": 1
+    "qos": 1,
+    "timeout": 10.0
   },
   "northbound_mqtt": {
     "ip": "127.0.0.1",

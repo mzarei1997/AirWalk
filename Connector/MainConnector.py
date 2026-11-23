@@ -16,6 +16,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+from Connector.DeviceConnector import DeviceConnector
 from Utilities.Utility import Utility
 import paho.mqtt.client as mqtt
 import json
@@ -31,6 +32,7 @@ mqtt_qos = 0
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code == 0:
         print("Gateway connected. Subscribing...")
+        connector: DeviceConnector = userdata["connector"]
         client.subscribe(mqtt_topic_location, qos=mqtt_qos)
     else:
         print(f"Connection failed with code {reason_code}")
@@ -38,7 +40,20 @@ def on_connect(client, userdata, flags, reason_code, properties):
 def on_message(client, userdata, msg):
     global last_location
     last_location = json.loads(msg.payload.decode("utf-8"))
+    connector: DeviceConnector = userdata["connector"]
+    connector.handle_incoming_location(last_location)
     print(f"[Received Location] {last_location}")
+
+def create_device_connector() -> DeviceConnector:
+    cataloge = Utility.read_json("Cataloge/Cataloge.json")
+    cataloge_mqtt = cataloge["southbound_mqtt"]
+    dc = DeviceConnector(
+        client_id=cataloge_mqtt["client_id"],
+        broker=cataloge_mqtt["broker"],
+        port=cataloge_mqtt["port"],
+        api_timeout=cataloge_mqtt["timeout"],
+    )
+    return dc
 
 if __name__ == "__main__":
     catalog = Utility.read_json("Cataloge/Cataloge.json")
@@ -54,11 +69,15 @@ if __name__ == "__main__":
 
     Utility.check_qos(mqtt_qos)
 
+    deviceConnector = create_device_connector()
+    deviceConnector.start()
+
     print("Device Connector getting initialized...")
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=mqtt_client_id)
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(mqtt_broker, mqtt_port, keepalive=mqtt_keepalive)
+    client.user_data_set({"connector": deviceConnector})
     client.loop_start() 
     print("Device Connector started. Publishing AQI updates...")
 
