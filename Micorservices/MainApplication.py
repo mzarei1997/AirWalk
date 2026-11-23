@@ -1,8 +1,10 @@
+from dataclasses import asdict
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+from Micorservices.ApplicationDataModel import ApplicationDataModel, LocationModel
 from Utilities.Utility import Utility
 import paho.mqtt.client as mqtt
 import json
@@ -22,9 +24,20 @@ def on_connect(client, userdata, flags, reason_code, properties):
         print(f"Connection failed with code {reason_code}")
 
 def on_message(client, userdata, msg):
-    global last_info
+    global last_info 
     last_info = json.loads(msg.payload.decode("utf-8"))
     print(f"[Received Info] {last_info}")
+
+def prepare_payload():
+    proximity = random.randint(0, 500)
+    payload = ApplicationDataModel(
+        location=LocationModel(
+            latitude=37.7749,
+            longitude=-122.4194
+        ),
+        proximity=proximity
+    )
+    return payload.model_dump_json()
 
 if __name__ == "__main__":
     catalog = Utility.read_json("Cataloge/Cataloge.json")
@@ -50,12 +63,16 @@ if __name__ == "__main__":
 
     try:
         while True:
+            # Reciever
             if last_info is not None:
-                print(f"Received info : {last_info}")
-            payload = random.randint(0, 100)
+                print(f"Received info once: {last_info}")
+                last_info = None
+
+            # provider
+            payload = prepare_payload()
             client.publish(
                 topic=mqtt_topic_location,
-                payload=json.dumps(payload)     
+                payload=payload
             )
             print(f"[Published] {payload}")
 

@@ -36,9 +36,9 @@ def on_connect(client, userdata, flags, reason_code, properties):
         print(f"Connection failed with code {reason_code}")
 
 def on_message(client, userdata, msg):
-    global latest_info
-    latest_info = json.loads(msg.payload.decode("utf-8"))
-    print(f"[Received Info] {latest_info}")
+    global last_location
+    last_location = json.loads(msg.payload.decode("utf-8"))
+    print(f"[Received Location] {last_location}")
 
 if __name__ == "__main__":
     catalog = Utility.read_json("Cataloge/Cataloge.json")
@@ -59,16 +59,19 @@ if __name__ == "__main__":
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(mqtt_broker, mqtt_port, keepalive=mqtt_keepalive)
-    client.loop_start()
+    client.loop_start() 
     print("Device Connector started. Publishing AQI updates...")
 
     try:
         while True:
+            # receiver
             if last_location is not None:
-                print(f"Received for location: {last_location}")
-            payload = "air quality update"
-            client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
-            print(f"[Published AQI] {payload}")
+                print(f"Processing new location once")
+                last_location = None
+            # provider
+            # payload = "air quality update"
+            # client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
+            # print(f"[Published AQI] {payload}")
 
             time.sleep(3)
     except KeyboardInterrupt:
