@@ -17,15 +17,16 @@ if __name__ == "__main__":
 
 
 
-    repo = CatalogeRepository(
-        mongo_uri="mongodb://localhost:27017",
-        db_name="turin_catalog"
-    )
-    repo.write_turin_boundary("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_boundary.geojson")
-    boundary = repo.read_turin_boundary()
-    repo.write_turin_polygons("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_polygons.geojson")
-    polygons = repo.read_turin_polygons()
-    print(f"Polygons loaded: {len(polygons)}")
+    ########## Cataloge Test - register data
+    # repo = CatalogeRepository(
+    #     mongo_uri="mongodb://localhost:27017",
+    #     db_name="turin_catalog"
+    # )
+    # repo.write_turin_boundary("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_boundary.geojson")
+    # boundary = repo.read_turin_boundary()
+    # repo.write_turin_polygons("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_polygons.geojson")
+    # polygons = repo.read_turin_polygons()
+    # print(f"Polygons loaded: {len(polygons)}")
 
 
 
