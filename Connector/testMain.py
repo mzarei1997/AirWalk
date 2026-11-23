@@ -1,23 +1,17 @@
-from Cataloge.AQICN.CatalogeRepository import CatalogeRepository 
-from Cataloge.AQICN.ResponseModelAQICN import AqicnResponseModel
-from Rest.RestRequestModel import RestRequestModel
-from Rest.RestManager import RestManager
-from Utilities.DeviceConnector import DeviceConnector
-from Utilities.Utility import Utility
-from MQTT.MqttManager import MQTTManager
-from Utilities.PollingBridge import PollingBridgeService
-from MQTT.MqttRequestModel import MQTTRequestModel 
-from Cataloge.Database import MongoDatabase
-import time
+import sys
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+# from Utilities.Utility import Utility
+# import paho.mqtt.client as mqtt
+# import json
+# import time
+# import random
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-
-
-    ########## Cataloge Test - register data
+    ########## Cataloge Test - register data - it shoul happen in the device connector
     # repo = CatalogeRepository(
     #     mongo_uri="mongodb://localhost:27017",
     #     db_name="turin_catalog"
@@ -27,9 +21,6 @@ if __name__ == "__main__":
     # repo.write_turin_polygons("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_polygons.geojson")
     # polygons = repo.read_turin_polygons()
     # print(f"Polygons loaded: {len(polygons)}")
-
-
-
 
     ########### DeviceConnector Test
     # def subscribe_callback(topic: str, reading: AqicnResponseModel):

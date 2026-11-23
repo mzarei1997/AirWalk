@@ -4,5 +4,29 @@
     "params": {
       "token": "e2bcd0ea67986ee83d9d841a0efdc696df385e9d"
     }
+  },
+  "southbound_mqtt": {
+    "ip": "127.0.0.1",
+    "broker": "localhost",
+    "port": 1883,
+    "topic": "southbound/airwalk",
+    "client_id": "airwalk-southbound",
+    "keep_alive": 60, 
+    "qos": 1
+  },
+  "northbound_mqtt": {
+    "ip": "127.0.0.1",
+    "broker": "localhost",
+    "port": 1883,
+    "keep_alive": 60,
+    "qos": 1,
+    "location_protocol": {
+      "topic": "northbound/airwalk/location",
+      "client_id": "client_id_location"
+    },
+    "info_protocol": {
+      "topic": "northbound/airwalk/info",
+      "client_id": "client_id_info"
+    }
   }
 }
