@@ -77,7 +77,7 @@ if __name__ == "__main__":
             )
             print(f"[Published] {payload}")
 
-            time.sleep(5)
+            time.sleep(10)
     except KeyboardInterrupt:
         client.loop_stop()
         client.disconnect()

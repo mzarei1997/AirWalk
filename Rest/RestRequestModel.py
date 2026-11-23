@@ -7,4 +7,4 @@ class RestRequestModel(BaseModel):
     payload: Optional[BaseModel] = None
     response_model: Type[BaseModel]
     headers: Optional[Dict[str, str]] = None
-    params: Optional[Dict[str, str]] = None
+    params: str = None

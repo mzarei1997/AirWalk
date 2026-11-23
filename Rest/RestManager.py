@@ -16,8 +16,9 @@ class RestManager:
         self,
         model: RestRequestModel
     ) -> T:
+        print(f"{model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}")
         response = self._session.get(
-            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}",
             params=model.params or {},
             json=model.payload.model_dump(exclude_none=True) if model.payload else None,
             headers=model.headers,
@@ -31,7 +32,7 @@ class RestManager:
         model: RestRequestModel
     ) -> T:
         response = self._session.post(
-            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}",
             params=model.params or {},
             json=model.payload.model_dump(exclude_none=True) if model.payload else None,
             headers=model.headers,
@@ -45,7 +46,7 @@ class RestManager:
         model: RestRequestModel
     ) -> T:
         response = self._session.put(
-            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}",
             params=model.params or {},
             json=model.payload.model_dump(exclude_none=True) if model.payload else None,
             headers=model.headers,
@@ -59,7 +60,7 @@ class RestManager:
         model: RestRequestModel
     ) -> T:
         response = self._session.delete(
-            f"{model.baseUrl}/{model.endpoint.lstrip('/')}",
+            f"{model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}",
             params=model.params or {},
             headers=model.headers,
             timeout=self.timeout,

@@ -1,8 +1,11 @@
 {
   "AQICN": {
-    "baseUrl": "https://api.waqi.info/feed",
+    "baseUrl": "https://api.waqi.info",
+    "endpoint": "/feed",
     "params": {
       "token": "e2bcd0ea67986ee83d9d841a0efdc696df385e9d"
+    },
+    "headers": {
     }
   },
   "southbound_mqtt": {

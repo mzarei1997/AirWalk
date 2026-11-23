@@ -24,7 +24,6 @@ import time
 import random
 
 
-last_location = None
 mqtt_topic_info = None
 mqtt_topic_location = None
 mqtt_qos = 0
@@ -38,7 +37,6 @@ def on_connect(client, userdata, flags, reason_code, properties):
         print(f"Connection failed with code {reason_code}")
 
 def on_message(client, userdata, msg):
-    global last_location
     last_location = json.loads(msg.payload.decode("utf-8"))
     connector: DeviceConnector = userdata["connector"]
     connector.handle_incoming_location(last_location)
@@ -83,10 +81,15 @@ if __name__ == "__main__":
 
     try:
         while True:
-            # receiver
-            if last_location is not None:
-                print(f"Processing new location once")
-                last_location = None
+            # Drain all incoming location updates from the queue
+            while not deviceConnector.location_queue.empty():
+                aqi_data = deviceConnector.fetch_aqi_data()
+                if aqi_data is not None:
+                    print(f"[AQI Fetched] {aqi_data}")
+                    # Publish `aqi_data` to your info topic here
+
+            # Prevent 100% CPU spin while waiting for new messages
+            time.sleep(0.5)
             # provider
             # payload = "air quality update"
             # client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
