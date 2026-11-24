@@ -91,8 +91,8 @@ if __name__ == "__main__":
             # Prevent 100% CPU spin while waiting for new messages
             time.sleep(0.5)
             # provider
-            # payload = "air quality update"
-            # client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
+            payload = "air quality update"
+            client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
             # print(f"[Published AQI] {payload}")
 
             time.sleep(3)
