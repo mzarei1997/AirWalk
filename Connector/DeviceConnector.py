@@ -1,5 +1,6 @@
 from queue import Queue
 from typing import Any, List, Optional
+from Cataloge.AQICN.CatalogeRepository import CatalogeRepository
 from Cataloge.AQICN.ResponseModelAQICN import AqicnResponseModel
 from Rest.RestManager import RestManager
 from Rest.RestRequestModel import RestRequestModel
@@ -31,8 +32,9 @@ class DeviceConnector:
         self.location_queue: Queue = Queue()
         self.latest_location: Optional[Any] = None
         cataloge = Utility.read_json("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/Cataloge.json")
-        print(cataloge)
         self.config = cataloge["AQICN"]
+        self.register_resources()
+
 
     def add_polling_source(
         self,
@@ -84,7 +86,6 @@ class DeviceConnector:
         if self.location_queue.empty():
             return None
         self.latest_location = self.location_queue.get()
-        print(self.latest_location)
         requestModel = RestRequestModel(
             baseUrl=self.config["baseUrl"],
             endpoint=self.config["endpoint"],
@@ -94,4 +95,16 @@ class DeviceConnector:
         )
         result = self.api.get(requestModel)
         return result
+
+    def register_resources(self) :
+        cataloge = Utility.read_json("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/Cataloge.json")
+        mongo_config = cataloge["mongodb"]
+        repo = CatalogeRepository(
+            mongo_uri=mongo_config["url"],
+            db_name=mongo_config["db_name"],
+            collection=mongo_config["collections"]["polygons"]["collection_name"]
+        )
+        repo.write_turin_polygons(file_path=mongo_config["collections"]["polygons"]["address"])
+        polygons = repo.read_turin_polygons()
+        # polygons loaded, now gets them filtered based on distsnce of prosimity and return closest ones 
 

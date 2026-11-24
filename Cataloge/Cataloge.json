@@ -1,4 +1,14 @@
 {
+  "mongodb": {
+    "url": "mongodb://localhost:27017",
+    "db_name": "airwalk_db",
+    "collections": {
+      "polygons": {
+        "collection_name": "polygons",
+        "address": "/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/turin_polygons.geojson"
+      }
+    }
+  },
   "AQICN": {
     "baseUrl": "https://api.waqi.info",
     "endpoint": "/feed",
