@@ -68,7 +68,7 @@ if __name__ == "__main__":
     Utility.check_qos(mqtt_qos)
 
     deviceConnector = create_device_connector()
-    deviceConnector.start()
+    # deviceConnector.start()
 
     print("Device Connector getting initialized...")
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=mqtt_client_id)
@@ -85,14 +85,14 @@ if __name__ == "__main__":
             while not deviceConnector.location_queue.empty():
                 aqi_data = deviceConnector.fetch_aqi_data()
                 if aqi_data is not None:
-                    print(f"[AQI Fetched] {aqi_data}")
+                    print(f"[AQI Fetched]")
                     # Publish `aqi_data` to your info topic here
 
             # Prevent 100% CPU spin while waiting for new messages
             time.sleep(0.5)
             # provider
-            payload = "air quality update"
-            client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
+            # payload = "air quality update"
+            # client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
             # print(f"[Published AQI] {payload}")
 
             time.sleep(3)
