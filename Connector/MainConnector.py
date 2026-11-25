@@ -6,15 +6,16 @@
 # from Utilities.Utility import Utility
 # from MQTT.MqttManager import MQTTManager
 # from Utilities.PollingBridge import PollingBridgeService
-# from MQTT.MqttRequestModel import MQTTRequestModel 
 # from Cataloge.Database import MongoDatabase
 # from pathlib import Path
 
 
 import sys
 from pathlib import Path
-
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from MQTT.MqttRequestModel import MQTTRequestModel 
+from MQTT.MqttManager import MQTTManager
+
 
 from Connector.DeviceConnector import DeviceConnector
 from Utilities.Utility import Utility
@@ -22,25 +23,6 @@ import paho.mqtt.client as mqtt
 import json
 import time
 import random
-
-
-mqtt_topic_info = None
-mqtt_topic_location = None
-mqtt_qos = 0
-
-def on_connect(client, userdata, flags, reason_code, properties):
-    if reason_code == 0:
-        print("Gateway connected. Subscribing...")
-        connector: DeviceConnector = userdata["connector"]
-        client.subscribe(mqtt_topic_location, qos=mqtt_qos)
-    else:
-        print(f"Connection failed with code {reason_code}")
-
-def on_message(client, userdata, msg):
-    last_location = json.loads(msg.payload.decode("utf-8"))
-    connector: DeviceConnector = userdata["connector"]
-    connector.handle_incoming_location(last_location)
-    print(f"[Received Location] {last_location}")
 
 def create_device_connector() -> DeviceConnector:
     cataloge = Utility.read_json("Cataloge/Cataloge.json")
@@ -56,47 +38,42 @@ def create_device_connector() -> DeviceConnector:
 if __name__ == "__main__":
     catalog = Utility.read_json("Cataloge/Cataloge.json")
     mqtt_config = catalog["northbound_mqtt"]
-
-    mqtt_broker = mqtt_config["broker"]
-    mqtt_port = mqtt_config["port"]
-    mqtt_topic_info = mqtt_config["info_protocol"]["topic"] # to pubslish the info
-    mqtt_client_id = mqtt_config["info_protocol"]["client_id"] 
-    mqtt_topic_location = mqtt_config["location_protocol"]["topic"] # to subscribe for location
-    mqtt_qos = mqtt_config["qos"]
-    mqtt_keepalive = mqtt_config["keep_alive"]
-
-    Utility.check_qos(mqtt_qos)
-
     deviceConnector = create_device_connector()
     # deviceConnector.start()
 
-    print("Device Connector getting initialized...")
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=mqtt_client_id)
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.connect(mqtt_broker, mqtt_port, keepalive=mqtt_keepalive)
-    client.user_data_set({"connector": deviceConnector})
-    client.loop_start() 
-    print("Device Connector started. Publishing AQI updates...")
+    main_connector_mqtt = MQTTManager(
+        client_id=mqtt_config["info_protocol"]["client_id"],
+        broker=mqtt_config["broker"], 
+        port=mqtt_config["port"],
+        callback=deviceConnector.handle_incoming_location
+    )
+    main_connector_mqtt.start()
+    # client.user_data_set({"connector": deviceConnector})
 
     try:
+        main_connector_mqtt.subscribe(
+            model=MQTTRequestModel(
+                topic= mqtt_config["location_protocol"]["topic"], 
+                payload=None
+            ),
+                qos=mqtt_config["qos"]
+            )
         while True:
-            # Drain all incoming location updates from the queue
             while not deviceConnector.location_queue.empty():
-                aqi_data = deviceConnector.fetch_aqi_data()
+                aqi_data = deviceConnector.fetch_aqi_data() ## check from the course 
                 if aqi_data is not None:
                     print(f"[AQI Fetched]")
                     # Publish `aqi_data` to your info topic here
 
-            # Prevent 100% CPU spin while waiting for new messages
-            time.sleep(0.5)
-            # provider
-            # payload = "air quality update"
-            # client.publish(topic=mqtt_topic_info, payload=json.dumps(payload))
-            # print(f"[Published AQI] {payload}")
-
+            # main_connector_mqtt.publish(
+            #     MQTTRequestModel(
+            #         topic=mqtt_config["info_protocol"]["topic"], # to publish the location updates
+            #         payload=None ## fill it with proper value
+            #     ),
+            #     qos= mqtt_config["qos"]
+            # )
+            # print(f"[Published] {None}")
             time.sleep(3)
     except KeyboardInterrupt:
-        client.loop_stop()
-        client.disconnect()
+        main_connector_mqtt.stop()
 

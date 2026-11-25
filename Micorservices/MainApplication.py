@@ -2,33 +2,16 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from dataclasses import asdict
-
-
 from MQTT.MqttRequestModel import MQTTRequestModel
 from MQTT.MqttManager import MQTTManager
-
-
 from Connector.DeviceConnector import DeviceConnector
 from Micorservices.ApplicationDataModel import ApplicationDataModel, LocationModel
 from Utilities.Utility import Utility
+from pydantic import BaseModel
 import paho.mqtt.client as mqtt
+import random
 import json
 import time
-from pydantic import BaseModel
-import random
-
-
-
-# def on_connect(client, userdata, flags, reason_code, properties):
-#     if reason_code == 0:
-#         print("Device Connector connected. Subscribing...")
-#     else:
-#         print(f"Connection failed with code {reason_code}")
-
-# def on_message(client, userdata, msg):
-#     global last_info 
-#     last_info = json.loads(msg.payload.decode("utf-8"))
-#     print(f"[Received Info] {last_info}")
 
 def prepare_payload() -> BaseModel:
     proximity = random.randint(0, 500)

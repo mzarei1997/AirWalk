@@ -1,3 +1,4 @@
+import json
 from queue import Queue
 from typing import Any, List, Optional
 from Cataloge.AQICN.CatalogeRepository import CatalogeRepository
@@ -30,7 +31,7 @@ class DeviceConnector:
 
         # Queue and state for incoming MQTT updates
         self.location_queue: Queue = Queue()
-        self.latest_location: Optional[Any] = None
+        self.latest_location: json = None
         cataloge = Utility.read_json("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/Cataloge.json")
         self.config = cataloge["AQICN"]
         self.register_resources()
@@ -59,11 +60,13 @@ class DeviceConnector:
         if self._is_running:
             bridge.start()
 
+    ### what are the start and end functions 
+    ### what the hell mwtt is doing here
     def start(self) -> None:
         if self._is_running:
             return
 
-        self._mqtt.connect()
+        self._mqtt.connect() 
         for bridge in self._bridges:
             bridge.start()
         self._is_running = True
@@ -77,10 +80,9 @@ class DeviceConnector:
         self._mqtt.disconnect()
         self._is_running = False
 
-    def handle_incoming_location(self, data: BaseModel) -> None:
+    def handle_incoming_location(self, data: json) -> None:
         self.latest_location = data
         self.location_queue.put(data)
-        # print(f"[DeviceConnector] Stored new location: {data}")
 
     def fetch_aqi_data(self) -> Optional[BaseModel]:
         if self.location_queue.empty():

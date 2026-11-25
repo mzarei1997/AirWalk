@@ -8,7 +8,7 @@ import json
 T = TypeVar("T", bound=BaseModel)
 
 class MQTTManager:
-    def __init__(self, client_id: str, broker: str = "localhost", port: int = 1883):
+    def __init__(self, client_id: str, broker: str = "localhost", port: int = 1883, callback: json = None):
         self.broker = broker
         self.port = port
         self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
@@ -16,6 +16,7 @@ class MQTTManager:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.on_publish = self.on_publish
+        self.callback = callback
         self.topics = set()
 
     def start(self) -> None:
@@ -44,13 +45,10 @@ class MQTTManager:
             self.client.subscribe(topic=topic)
 
     def on_message(self, client, userdata, msg) -> json:
-        # raw_text = msg.payload.decode("utf-8")
-        # for pattern, (response_model, callback) in self._handlers.items():
-        #     if mqtt.topic_matches_sub(pattern, msg.topic):
-        #         parsed = response_model.model_validate_json(raw_text) if response_model else raw_text
-        #         callback(msg.topic, parsed)
         result = json.loads(msg.payload.decode("utf-8"))
         print(f"[Received] {result}")
+        if self.callback:
+            self.callback(result)
         return result
 
     def on_publish(self, client, userdata, mid, reason_code, properties) -> None:
