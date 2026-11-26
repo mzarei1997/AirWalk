@@ -4,7 +4,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from pydantic import BaseModel
 from Micorservices.ApplicationDataModel import LocationModel
 
-    
 class AirQualityAttributes(BaseModel):
     pm25: float
     pm10: float
@@ -32,6 +31,6 @@ class ConnectorDetailResponseModel(BaseModel):
 class ConnectorResponseModel(BaseModel):
     user_location: LocationModel
     proximity: int
-    info: list[ConnectorDetailResponseModel]
+    info: ConnectorDetailResponseModel
     
 

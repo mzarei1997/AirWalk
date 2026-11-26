@@ -35,14 +35,14 @@ class DeviceConnector:
 
         # Queue and state for incoming MQTT updates
         self.location_queue: Queue = Queue()
-        self.last_parks_batch: ConnectorResponseModel = None
+        self.last_parks_batch: list[ConnectorResponseModel] = None
         cataloge = Utility.read_json("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/Cataloge.json")
         self.config = cataloge["AQICN"]
         self.create_mongo_repo()
         self.repo = self.create_mongo_repo()
         self.register_resources()
 
-    def get_last_batch(self) -> Optional[ConnectorResponseModel]:
+    def get_last_batch(self) -> list[ConnectorResponseModel]:
         if self.location_queue.empty():
             return None
         if self.last_parks_batch is not None:
@@ -50,9 +50,9 @@ class DeviceConnector:
         else:
             return None
 
-    def get_last_parks_batch(self, user_info: ApplicationDataModel) -> ConnectorResponseModel:
+    def get_last_parks_batch(self, user_info: ApplicationDataModel) -> list[ConnectorResponseModel]:
         polygons = self.repo.read_turin_polygons()
-        prepared_dateil: list[ConnectorDetailResponseModel] = []
+        prepared_dateil: list[ConnectorResponseModel] = []
         for polygon in polygons:
             distance = Utility.calculate_distance(
                 user_info.location,
@@ -80,20 +80,22 @@ class DeviceConnector:
                     so2= getattr(aqi_data.data.iaqi.so2, "v", 0),
                     co= getattr(aqi_data.data.iaqi.co, "v", 0)
                 )
-                prepared_dateil.append(ConnectorDetailResponseModel(
-                    park_location= LocationModel(latitude=polygon.properties.midpoint_lat, longitude=polygon.properties.midpoint_lon),
-                    park_id= polygon.id,
-                    distance= distance,
-                    airel_attributes= air_info,
-                    physical_attribute= park_info
-                ))
+                prepared_dateil.append(
+                    ConnectorResponseModel(
+                        user_location=user_info.location,
+                        proximity=user_info.proximity,
+                        info=ConnectorDetailResponseModel(
+                            park_location= LocationModel(latitude=polygon.properties.midpoint_lat, longitude=polygon.properties.midpoint_lon),
+                            park_id= polygon.id,
+                            distance= distance,
+                            airel_attributes= air_info,
+                            physical_attribute= park_info
+                        )
+                    )
+                )
         
-        return ConnectorResponseModel(
-            user_location=user_info.location,
-            proximity=user_info.proximity,
-            info=prepared_dateil
-        )
-        
+        return prepared_dateil
+
     def handle_incoming_location(self, data: dict) -> None:
         data_model = ApplicationDataModel(**data)
         connectorResponse = self.get_last_parks_batch(data_model)
