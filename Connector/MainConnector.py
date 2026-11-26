@@ -51,6 +51,7 @@ if __name__ == "__main__":
     # client.user_data_set({"connector": deviceConnector})
 
     try:
+        # Subscribe
         main_connector_mqtt.subscribe(
             model=MQTTRequestModel(
                 topic= mqtt_config["location_protocol"]["topic"], 
@@ -59,20 +60,20 @@ if __name__ == "__main__":
                 qos=mqtt_config["qos"]
             )
         while True:
+            # Publish
             while not deviceConnector.location_queue.empty():
                 aqi_data = deviceConnector.fetch_aqi_data() ## check from the course 
                 if aqi_data is not None:
-                    print(f"[AQI Fetched]")
+                    print(f"[AQI Data Fetched]")
+                    print(aqi_data)
+                    main_connector_mqtt.publish(
+                        MQTTRequestModel(
+                            topic=mqtt_config["info_protocol"]["topic"], # to publish the location updates
+                            payload=aqi_data
+                        ),
+                        qos= mqtt_config["qos"]
+                    )
                     # Publish `aqi_data` to your info topic here
-
-            # main_connector_mqtt.publish(
-            #     MQTTRequestModel(
-            #         topic=mqtt_config["info_protocol"]["topic"], # to publish the location updates
-            #         payload=None ## fill it with proper value
-            #     ),
-            #     qos= mqtt_config["qos"]
-            # )
-            # print(f"[Published] {None}")
             time.sleep(3)
     except KeyboardInterrupt:
         main_connector_mqtt.stop()

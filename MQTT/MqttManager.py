@@ -46,7 +46,6 @@ class MQTTManager:
 
     def on_message(self, client, userdata, msg) -> json:
         result = json.loads(msg.payload.decode("utf-8"))
-        print(f"[Received] {result}")
         if self.callback:
             self.callback(result)
         return result

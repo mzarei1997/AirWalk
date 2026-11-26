@@ -14,15 +14,19 @@ import json
 import time
 
 def prepare_payload() -> BaseModel:
-    proximity = random.randint(0, 500)
+    proximity = random.randint(500, 1000)
     payload = ApplicationDataModel(
         location=LocationModel(
-            latitude=37.7749,
-            longitude=-122.4194
+            latitude=45.06622557930954,
+            longitude=7.659991392255953
         ),
         proximity=proximity
     )
     return payload
+
+def handle_incoming_info(data: json) -> None:
+    print(f"[Info Received App Side] {data}")
+    # Here you can process the incoming info data as needed
 
 if __name__ == "__main__":
     catalog = Utility.read_json("Cataloge/Cataloge.json")
@@ -31,10 +35,13 @@ if __name__ == "__main__":
     main_app_mqtt = MQTTManager(
         client_id=mqtt_config["location_protocol"]["client_id"],
         broker=mqtt_config["broker"], 
-        port=mqtt_config["port"])
+        port=mqtt_config["port"], 
+        callback= handle_incoming_info
+    )
     main_app_mqtt.start()
     
     try:
+        # Subscribe
         main_app_mqtt.subscribe(
             model=MQTTRequestModel(
                 topic= mqtt_config["info_protocol"]["topic"],
@@ -43,7 +50,7 @@ if __name__ == "__main__":
             qos=mqtt_config["qos"]
         )
         while True:
-            # provider
+            # Publishe
             payload = prepare_payload()
             main_app_mqtt.publish(
                 MQTTRequestModel(
@@ -52,7 +59,6 @@ if __name__ == "__main__":
                 ),
                 qos= mqtt_config["qos"]
             )
-            print(f"[Published] {payload}")
 
             time.sleep(10)
     except KeyboardInterrupt:

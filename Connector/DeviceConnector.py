@@ -8,12 +8,15 @@ from Rest.RestRequestModel import RestRequestModel
 from MQTT.MqttManager import MQTTManager
 from Utilities.PollingBridge import PollingBridgeService
 from pydantic import BaseModel
+from Micorservices.ApplicationDataModel import LocationModel, ApplicationDataModel
 
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from Utilities.Utility import Utility
+
+from Connector.ConnectorResponseModel import AirQualityAttributes, PhysicalAttributes, ConnectorDetailResponseModel, ConnectorResponseModel 
 
 class DeviceConnector:
 
@@ -31,63 +34,74 @@ class DeviceConnector:
 
         # Queue and state for incoming MQTT updates
         self.location_queue: Queue = Queue()
-        self.latest_location: json = None
+        self.last_parks_batch: ConnectorResponseModel = None
         cataloge = Utility.read_json("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/Cataloge.json")
         self.config = cataloge["AQICN"]
+        self.create_mongo_repo()
+        self.repo = self.create_mongo_repo()
         self.register_resources()
 
 
-    def add_polling_source(
-        self,
-        rest_request: RestRequestModel,
-        publish_topic: str,
-        interval: float = 10.0,
-        qos: int = 1,
-        retain: bool = False,
-    ) -> None:
-        bridge = PollingBridgeService(
-            rest_manager=self._api,
-            mqtt_manager=self._mqtt,
-            rest_request=rest_request,
-            publish_topic=publish_topic,
-            interval=interval,
-            qos=qos,
-            retain=retain,
+    def get_last_parks_batch(self, user_info: ApplicationDataModel):
+        polygons = self.repo.read_turin_polygons()
+        parks_info = []
+        airels_info = []
+        for polygon in polygons:
+            distance = Utility.calculate_distance(
+                user_info.location,
+                LocationModel(
+                    latitude=polygon.properties.midpoint_lat,
+                    longitude=polygon.properties.midpoint_lon
+                    )
+                )
+            if distance < user_info.proximity:
+                park_info = PhysicalAttributes(
+                    size_score: polygon.property.size_score,
+                    route_score: polygon.property.route_score,
+                    surface_score: polygon.property.surface_score,
+                    type_score: polygon.property.type_score,
+                    compactness_score: polygon.property.compactness_score,
+                    access_score: polygon.property.access_score,
+                    pqs: polygon.property.pqs
+                )
+                air_info = AirQualityAttributes(
+                    aqi: int,
+                    pm25: float,
+                    pm10: float,
+                    o3: float,
+                    no2: float,
+                    so2: float,
+                    co: float
+                )
+                
+                
+                parks_info.append(air_info)
+                airels_info.append(air_info)
+        self.last_parks_batch = ConnectorResponseModel(
+            user_location=user_info.location,
+            proximity=user_info.proximity,
+            info=ConnectorDetailResponseModel(
+                park_location=LocationModel(
+                    latitude=polygon.properties.midpoint_lat,
+                    longitude=polygon.properties.midpoint_lon
+                ),
+                park_id=polygon.properties.park_id,
+                airel_attributes=airels_info,
+                physical_attribute=parks_info
+            )
         )
-        self._bridges.append(bridge)
-
-        # If the connector is already running, start this bridge immediately
-        if self._is_running:
-            bridge.start()
-
-    ### what are the start and end functions 
-    ### what the hell mwtt is doing here
-    def start(self) -> None:
-        if self._is_running:
-            return
-
-        self._mqtt.connect() 
-        for bridge in self._bridges:
-            bridge.start()
-        self._is_running = True
-
-    def stop(self) -> None:
-        if not self._is_running:
-            return
-
-        for bridge in self._bridges:
-            bridge.stop()
-        self._mqtt.disconnect()
-        self._is_running = False
-
-    def handle_incoming_location(self, data: json) -> None:
-        self.latest_location = data
+                
+        
+    def handle_incoming_location(self, data: dict) -> None:
+        data_model = ApplicationDataModel(**data)
+        self.get_last_parks_batch(data_model)
+        self.last_parks_batch = data
         self.location_queue.put(data)
 
     def fetch_aqi_data(self) -> Optional[BaseModel]:
         if self.location_queue.empty():
             return None
-        self.latest_location = self.location_queue.get()
+        self.last_parks_batch = self.location_queue.get()
         requestModel = RestRequestModel(
             baseUrl=self.config["baseUrl"],
             endpoint=self.config["endpoint"],
@@ -99,14 +113,17 @@ class DeviceConnector:
         return result
 
     def register_resources(self) :
+        mongo_config = self.get_mongo_config()
+        self.repo.write_turin_polygons(file_path=mongo_config["collections"]["polygons"]["address"])
+
+    def create_mongo_repo(self) -> CatalogeRepository:
+        mongo_config = self.get_mongo_config()
+        return CatalogeRepository(
+            mongo_uri=mongo_config["url"],
+            db_name=mongo_config["db_name"] 
+        )
+
+    def get_mongo_config(self) -> json:
         cataloge = Utility.read_json("/Users/mohammadreza/Documents/GitHub/AirWalk/Cataloge/Cataloge.json")
         mongo_config = cataloge["mongodb"]
-        repo = CatalogeRepository(
-            mongo_uri=mongo_config["url"],
-            db_name=mongo_config["db_name"],
-            collection=mongo_config["collections"]["polygons"]["collection_name"]
-        )
-        repo.write_turin_polygons(file_path=mongo_config["collections"]["polygons"]["address"])
-        polygons = repo.read_turin_polygons()
-        # polygons loaded, now gets them filtered based on distsnce of prosimity and return closest ones 
-
+        return mongo_config

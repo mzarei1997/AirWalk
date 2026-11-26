@@ -35,11 +35,11 @@
     "keep_alive": 60,
     "qos": 1,
     "location_protocol": {
-      "topic": "northbound/airwalk/location",
+      "topic": "northbound/airwalk/turin/user/location",
       "client_id": "client_id_location"
     },
     "info_protocol": {
-      "topic": "northbound/airwalk/info",
+      "topic": "northbound/airwalk/turin/par/+/aqi",
       "client_id": "client_id_info"
     }
   }
