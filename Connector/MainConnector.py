@@ -1,22 +1,8 @@
-# from Cataloge.AQICN.CatalogeRepository import CatalogeRepository 
-# from Cataloge.AQICN.ResponseModelAQICN import AqicnResponseModel
-# from Rest.RestRequestModel import RestRequestModel
-# from Rest.RestManager import RestManager
-# from Connector.DeviceConnector import DeviceConnector
-# from Utilities.Utility import Utility
-# from MQTT.MqttManager import MQTTManager
-# from Utilities.PollingBridge import PollingBridgeService
-# from Cataloge.Database import MongoDatabase
-# from pathlib import Path
-
-
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from MQTT.MqttRequestModel import MQTTRequestModel 
 from MQTT.MqttManager import MQTTManager
-
-
 from Connector.DeviceConnector import DeviceConnector
 from Utilities.Utility import Utility
 import paho.mqtt.client as mqtt
@@ -59,19 +45,25 @@ if __name__ == "__main__":
             ),
                 qos=mqtt_config["qos"]
             )
+        print("[MQTT] Subscribed to location updates topic.")
         while True:
             # Publish
             while not deviceConnector.location_queue.empty():
                 result = deviceConnector.get_last_batch() ## check from the course 
                 if result is not None:
-                    print(f"[AQI Data Fetched and Prepared]")
-                    main_connector_mqtt.publish(
-                        MQTTRequestModel(
-                            topic=mqtt_config["info_protocol"]["topic"], # to publish the location updates
-                            payload=result
-                        ),
-                        qos= mqtt_config["qos"]
-                    )
+                    for item in result:
+                        park_id = item.info.park_id
+                        park_topic = mqtt_config["info_protocol"]["topic"].replace("+", park_id)
+                        main_connector_mqtt.publish(
+                            MQTTRequestModel(
+                                topic=park_topic, # to publish the location updates
+                                payload=item
+                            ),
+                            qos= mqtt_config["qos"]
+                        )
+                        print(f"[Info Published] for park_id: {park_id} at topic: {park_topic}")
+                    deviceConnector.location_queue.get()  # Remove the processed item from the queue
+                    print(f"[Location Removed] for park_id: {park_id}")
             time.sleep(3)
     except KeyboardInterrupt:
         main_connector_mqtt.stop()

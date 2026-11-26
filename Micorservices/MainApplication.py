@@ -4,7 +4,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from dataclasses import asdict
 from MQTT.MqttRequestModel import MQTTRequestModel
 from MQTT.MqttManager import MQTTManager
-from Connector.DeviceConnector import DeviceConnector
 from Micorservices.ApplicationDataModel import ApplicationDataModel, LocationModel
 from Utilities.Utility import Utility
 from pydantic import BaseModel
@@ -14,18 +13,17 @@ import json
 import time
 
 def prepare_payload() -> BaseModel:
-    proximity = random.randint(500, 1000)
     payload = ApplicationDataModel(
         location=LocationModel(
             latitude=45.06622557930954,
             longitude=7.659991392255953
         ),
-        proximity=proximity
+        proximity=600
     )
     return payload
 
 def handle_incoming_info(data: json) -> None:
-    print(f"[Info Received App Side] {data}")
+    print(f"[Info Received App Side] for id: {data.get('info', {}).get('park_id', 'N/A')}")
     # Here you can process the incoming info data as needed
 
 if __name__ == "__main__":
@@ -49,6 +47,7 @@ if __name__ == "__main__":
             ),
             qos=mqtt_config["qos"]
         )
+        print("[MQTT] Subscribed to info updates topic.")
         while True:
             # Publishe
             payload = prepare_payload()
@@ -59,7 +58,8 @@ if __name__ == "__main__":
                 ),
                 qos= mqtt_config["qos"]
             )
+            print(f"[Location Published] {payload.location.latitude}, {payload.location.longitude}")
 
-            time.sleep(10)
+            time.sleep(20)
     except KeyboardInterrupt:
         main_app_mqtt.stop()

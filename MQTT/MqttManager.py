@@ -51,4 +51,5 @@ class MQTTManager:
         return result
 
     def on_publish(self, client, userdata, mid, reason_code, properties) -> None:
-        print(f"[Published] Message ID: {mid}")
+        # print(f"[Published] Message ID: {mid}")
+        pass

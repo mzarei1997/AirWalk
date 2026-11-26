@@ -16,7 +16,7 @@ class RestManager:
         self,
         model: RestRequestModel
     ) -> T:
-        print(f"[Call] On URL --> {model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}")
+        print(f"[Call] {model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}")
         response = self._session.get(
             f"{model.baseUrl}/{model.endpoint.lstrip('/')}/{model.params}",
             params=model.params or {},
