@@ -62,18 +62,16 @@ if __name__ == "__main__":
         while True:
             # Publish
             while not deviceConnector.location_queue.empty():
-                aqi_data = deviceConnector.fetch_aqi_data() ## check from the course 
-                if aqi_data is not None:
-                    print(f"[AQI Data Fetched]")
-                    print(aqi_data)
+                result = deviceConnector.get_last_batch() ## check from the course 
+                if result is not None:
+                    print(f"[AQI Data Fetched and Prepared]")
                     main_connector_mqtt.publish(
                         MQTTRequestModel(
                             topic=mqtt_config["info_protocol"]["topic"], # to publish the location updates
-                            payload=aqi_data
+                            payload=result
                         ),
                         qos= mqtt_config["qos"]
                     )
-                    # Publish `aqi_data` to your info topic here
             time.sleep(3)
     except KeyboardInterrupt:
         main_connector_mqtt.stop()

@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 import json
 from queue import Queue
 from typing import Any, List, Optional
@@ -10,10 +14,7 @@ from Utilities.PollingBridge import PollingBridgeService
 from pydantic import BaseModel
 from Micorservices.ApplicationDataModel import LocationModel, ApplicationDataModel
 
-import sys
-from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 from Utilities.Utility import Utility
 
 from Connector.ConnectorResponseModel import AirQualityAttributes, PhysicalAttributes, ConnectorDetailResponseModel, ConnectorResponseModel 
@@ -41,11 +42,17 @@ class DeviceConnector:
         self.repo = self.create_mongo_repo()
         self.register_resources()
 
+    def get_last_batch(self) -> Optional[ConnectorResponseModel]:
+        if self.location_queue.empty():
+            return None
+        if self.last_parks_batch is not None:
+            return self.last_parks_batch
+        else:
+            return None
 
-    def get_last_parks_batch(self, user_info: ApplicationDataModel):
+    def get_last_parks_batch(self, user_info: ApplicationDataModel) -> ConnectorResponseModel:
         polygons = self.repo.read_turin_polygons()
-        parks_info = []
-        airels_info = []
+        prepared_dateil: list[ConnectorDetailResponseModel] = []
         for polygon in polygons:
             distance = Utility.calculate_distance(
                 user_info.location,
@@ -55,61 +62,54 @@ class DeviceConnector:
                     )
                 )
             if distance < user_info.proximity:
+                aqi_data = self.fetch_aqi_data(polygon.properties.midpoint_lat, polygon.properties.midpoint_lon)
                 park_info = PhysicalAttributes(
-                    size_score: polygon.property.size_score,
-                    route_score: polygon.property.route_score,
-                    surface_score: polygon.property.surface_score,
-                    type_score: polygon.property.type_score,
-                    compactness_score: polygon.property.compactness_score,
-                    access_score: polygon.property.access_score,
-                    pqs: polygon.property.pqs
+                    size_score= polygon.properties.size_score,
+                    route_score= polygon.properties.route_score,
+                    surface_score= polygon.properties.surface_score,
+                    type_score= polygon.properties.type_score,
+                    compactness_score= polygon.properties.compactness_score,
+                    access_score= polygon.properties.access_score,
+                    pqs= polygon.properties.pqs
                 )
                 air_info = AirQualityAttributes(
-                    aqi: int,
-                    pm25: float,
-                    pm10: float,
-                    o3: float,
-                    no2: float,
-                    so2: float,
-                    co: float
+                    pm25= getattr(aqi_data.data.iaqi.pm25, "v", 0),
+                    pm10= getattr(aqi_data.data.iaqi.pm10, "v", 0),
+                    o3= getattr(aqi_data.data.iaqi.o3, "v", 0),
+                    no2= getattr(aqi_data.data.iaqi.no2, "v", 0),
+                    so2= getattr(aqi_data.data.iaqi.so2, "v", 0),
+                    co= getattr(aqi_data.data.iaqi.co, "v", 0)
                 )
-                
-                
-                parks_info.append(air_info)
-                airels_info.append(air_info)
-        self.last_parks_batch = ConnectorResponseModel(
+                prepared_dateil.append(ConnectorDetailResponseModel(
+                    park_location= LocationModel(latitude=polygon.properties.midpoint_lat, longitude=polygon.properties.midpoint_lon),
+                    park_id= polygon.id,
+                    distance= distance,
+                    airel_attributes= air_info,
+                    physical_attribute= park_info
+                ))
+        
+        return ConnectorResponseModel(
             user_location=user_info.location,
             proximity=user_info.proximity,
-            info=ConnectorDetailResponseModel(
-                park_location=LocationModel(
-                    latitude=polygon.properties.midpoint_lat,
-                    longitude=polygon.properties.midpoint_lon
-                ),
-                park_id=polygon.properties.park_id,
-                airel_attributes=airels_info,
-                physical_attribute=parks_info
-            )
+            info=prepared_dateil
         )
-                
         
     def handle_incoming_location(self, data: dict) -> None:
         data_model = ApplicationDataModel(**data)
-        self.get_last_parks_batch(data_model)
-        self.last_parks_batch = data
-        self.location_queue.put(data)
+        connectorResponse = self.get_last_parks_batch(data_model)
+        self.last_parks_batch = connectorResponse
+        self.location_queue.put(connectorResponse)
 
-    def fetch_aqi_data(self) -> Optional[BaseModel]:
-        if self.location_queue.empty():
-            return None
-        self.last_parks_batch = self.location_queue.get()
+    def fetch_aqi_data(self, lat, lon) -> Optional[AqicnResponseModel]:
         requestModel = RestRequestModel(
             baseUrl=self.config["baseUrl"],
             endpoint=self.config["endpoint"],
             headers=self.config["headers"],
             response_model=AqicnResponseModel,
-            params= f"geo:{self.latest_location['location']['latitude']};{self.latest_location['location']['longitude']}/?token={self.config['params']['token']}",
+            params= f"geo:{lat};{lon}/?token={self.config['params']['token']}",
         )
         result = self.api.get(requestModel)
+        print(f"[AQI Data Fetched]")
         return result
 
     def register_resources(self) :

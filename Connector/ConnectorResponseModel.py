@@ -5,8 +5,7 @@ from pydantic import BaseModel
 from Micorservices.ApplicationDataModel import LocationModel
 
     
-def AirQualityAttributes(BaseModel):
-    aqi: int
+class AirQualityAttributes(BaseModel):
     pm25: float
     pm10: float
     o3: float
@@ -14,7 +13,7 @@ def AirQualityAttributes(BaseModel):
     so2: float
     co: float
 
-def PhysicalAttributes(BaseModel):
+class PhysicalAttributes(BaseModel):
     size_score: float
     route_score: float
     surface_score: float
@@ -23,15 +22,16 @@ def PhysicalAttributes(BaseModel):
     access_score: float
     pqs: float
     
-def ConnectorDetailResponseModel(BaseModel):
+class ConnectorDetailResponseModel(BaseModel):
     park_location: LocationModel
     park_id: str
+    distance: float
     airel_attributes: AirQualityAttributes
     physical_attribute: PhysicalAttributes
 
-def ConnectorResponseModel(BaseModel):
+class ConnectorResponseModel(BaseModel):
     user_location: LocationModel
     proximity: int
-    info: ConnectorDetailResponseModel
+    info: list[ConnectorDetailResponseModel]
     
 
